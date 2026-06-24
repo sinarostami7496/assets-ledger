@@ -13,7 +13,7 @@ import {
 } from 'recharts';
 import {
   Wallet,
-  DollarSign,
+  CircleDollarSign,
   Coins,
   Banknote,
   AlertTriangle,
@@ -25,9 +25,9 @@ const CHART_COLORS = ['#f0b429', '#4ade80', '#60a5fa', '#c084fc', '#fb7185', '#2
 
 const KPI_CONFIG = [
   { key: 'portfolioTotal', label: 'جمع کل ثروت', suffix: ' تومان', icon: Wallet, color: 'kpi-gold' },
-  { key: 'usdEquivalent', label: 'معادل دلاری کل ثروت', suffix: ' $', icon: DollarSign, color: 'kpi-blue', isUsd: true },
+  { key: 'usdtEquivalent', label: 'معادل USDT کل ثروت', suffix: ' USDT', icon: CircleDollarSign, color: 'kpi-blue', isUsdt: true },
   { key: 'goldTotal', label: 'ارزش کل بخش طلا', suffix: ' تومان', icon: Coins, color: 'kpi-amber' },
-  { key: 'liquidTotal', label: 'ارزش نقدینگی و دلار', suffix: ' تومان', icon: Banknote, color: 'kpi-green' },
+  { key: 'liquidTotal', label: 'ارزش نقدینگی و USDT', suffix: ' تومان', icon: Banknote, color: 'kpi-green' },
 ];
 
 function CustomTooltip({ active, payload, label }) {
@@ -46,12 +46,12 @@ function CustomTooltip({ active, payload, label }) {
 
 export default function DashboardPage() {
   const { portfolioSummary, state, prices } = useAssets();
-  const { portfolioTotal, goldTotal, liquidTotal, usdEquivalent, allocation, concentration } =
+  const { portfolioTotal, goldTotal, liquidTotal, usdtEquivalent, allocation, concentration } =
     portfolioSummary;
 
   const kpiValues = {
     portfolioTotal,
-    usdEquivalent,
+    usdtEquivalent,
     goldTotal,
     liquidTotal,
   };
@@ -75,7 +75,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="row g-3 mb-4">
-        {KPI_CONFIG.map(({ key, label, suffix, icon: Icon, color, isUsd }) => (
+        {KPI_CONFIG.map(({ key, label, suffix, icon: Icon, color, isUsdt }) => (
           <div key={key} className="col-sm-6 col-xl-3">
             <div className={`kpi-card ${color}`}>
               <div className="kpi-icon">
@@ -84,8 +84,8 @@ export default function DashboardPage() {
               <div>
                 <p className="kpi-label">{label}</p>
                 <p className="kpi-value">
-                  {isUsd
-                    ? `$${formatNumber(kpiValues[key], 0)}`
+                  {isUsdt
+                    ? `${formatNumber(kpiValues[key], 0)} USDT`
                     : formatCurrency(kpiValues[key], suffix)}
                 </p>
               </div>
@@ -191,8 +191,8 @@ export default function DashboardPage() {
               </LineChart>
             </ResponsiveContainer>
             <p className="text-muted small text-center mt-2 mb-0">
-              نرخ دلار فعلی: {formatCurrency(prices.usdRate, '')} — معادل: $
-              {formatNumber(usdEquivalent, 0)}
+              نرخ USDT فعلی: {formatCurrency(prices.usdtRate, '')} — معادل:{' '}
+              {formatNumber(usdtEquivalent, 0)} USDT
             </p>
           </div>
         </div>

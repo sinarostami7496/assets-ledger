@@ -39,7 +39,7 @@ export default function AssetLedgerPage() {
       ...EMPTY_ITEM_FORM,
       autoPrice: !!priceSource,
       priceSource,
-      unit: priceSource === 'gold18k' ? 'گرم' : priceSource === 'usd' ? 'دلار' : 'عدد',
+      unit: priceSource === 'gold18k' ? 'گرم' : priceSource === 'usdt' ? 'USDT' : 'عدد',
     });
   };
 
@@ -178,12 +178,12 @@ export default function AssetLedgerPage() {
                             <Calculator size={14} />
                           </button>
                         )}
-                        {assetClass.name === 'دلار' && (
+                        {(assetClass.name === 'USDT' || assetClass.name === 'دلار') && (
                           <button
                             type="button"
                             className="btn btn-outline-success"
-                            title="افزودن با نرخ دلار"
-                            onClick={() => openAddItem(assetClass.id, 'usd')}
+                            title="افزودن با نرخ USDT"
+                            onClick={() => openAddItem(assetClass.id, 'usdt')}
                           >
                             <Calculator size={14} />
                           </button>
@@ -341,19 +341,19 @@ export default function AssetLedgerPage() {
                           unit:
                             e.target.value === 'gold18k'
                               ? 'گرم'
-                              : e.target.value === 'usd'
-                                ? 'دلار'
+                              : e.target.value === 'usdt'
+                                ? 'USDT'
                                 : itemForm.unit,
                         })
                       }
                     >
                       <option value="gold18k">طلای ۱۸ عیار (گرم)</option>
-                      <option value="usd">نرخ دلار آزاد</option>
+                      <option value="usdt">نرخ USDT</option>
                     </select>
                     <small className="text-muted">
                       نرخ فعلی:{' '}
-                      {itemForm.priceSource === 'usd'
-                        ? formatCurrency(prices.usdRate)
+                      {itemForm.priceSource === 'usdt' || itemForm.priceSource === 'usd'
+                        ? formatCurrency(prices.usdtRate)
                         : formatCurrency(resolveUnitPrice({ autoPrice: true, priceSource: 'gold18k', unitPrice: 0 }))}
                     </small>
                   </div>

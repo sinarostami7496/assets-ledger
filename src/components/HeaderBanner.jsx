@@ -4,7 +4,7 @@ import { formatCurrency, formatNumber } from '../utils/format';
 
 const TICKER_ITEMS = [
   { key: 'goldOunceGlobal', label: 'انس جهانی طلا', suffix: ' $', decimals: 2 },
-  { key: 'usdRate', label: 'قیمت دلار آزاد', suffix: ' تومان', decimals: 0 },
+  { key: 'usdtRate', label: 'قیمت USDT', suffix: ' تومان', decimals: 0 },
   { key: 'gold18kPerGram', label: 'طلای ۱۸ عیار', suffix: ' تومان/گرم', decimals: 0 },
   { key: 'gold18kBubble', label: 'حباب طلای ۱۸ عیار', suffix: '٪', decimals: 1, isPercent: true },
 ];

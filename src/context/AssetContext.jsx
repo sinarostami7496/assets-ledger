@@ -6,7 +6,7 @@ const STORAGE_KEY = 'wealth-dashboard-v1';
 
 export const DEFAULT_PRICES = {
   goldOunceGlobal: 3980,
-  usdRate: 161500,
+  usdtRate: 166869,
   gold18kPerGram: 16085200,
   gold18kBubble: 0,
 };
@@ -52,17 +52,17 @@ export const INITIAL_ASSET_CLASSES = [
     ],
   },
   {
-    id: 'class-usd',
-    name: 'دلار',
+    id: 'class-usdt',
+    name: 'USDT',
     items: [
       {
-        id: 'item-usd-1',
-        name: 'اسکناس دلار',
+        id: 'item-usdt-1',
+        name: 'USDT',
         quantity: 3000,
-        unit: 'دلار',
+        unit: 'USDT',
         unitPrice: 0,
         autoPrice: true,
-        priceSource: 'usd',
+        priceSource: 'usdt',
       },
     ],
   },
@@ -110,6 +110,30 @@ const defaultState = {
   sidebarOpen: false,
 };
 
+function migratePrices(prices) {
+  if (!prices) return { ...DEFAULT_PRICES };
+  const migrated = { ...DEFAULT_PRICES, ...prices };
+  if (migrated.usdRate != null && migrated.usdtRate == null) {
+    migrated.usdtRate = migrated.usdRate;
+  }
+  delete migrated.usdRate;
+  return migrated;
+}
+
+function migrateAssetClasses(assetClasses) {
+  if (!assetClasses) return INITIAL_ASSET_CLASSES;
+  return assetClasses.map((c) => ({
+    ...c,
+    name: c.name === 'دلار' ? 'USDT' : c.name,
+    items: c.items.map((item) => ({
+      ...item,
+      priceSource: item.priceSource === 'usd' ? 'usdt' : item.priceSource,
+      unit: item.unit === 'دلار' ? 'USDT' : item.unit,
+      name: item.name === 'اسکناس دلار' ? 'USDT' : item.name,
+    })),
+  }));
+}
+
 function loadState() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -118,6 +142,8 @@ function loadState() {
     return {
       ...defaultState,
       ...parsed,
+      prices: migratePrices(parsed.prices),
+      assetClasses: migrateAssetClasses(parsed.assetClasses),
       priceFetchStatus: 'cached',
       priceFlash: {},
     };
@@ -240,8 +266,8 @@ export function resolveUnitPrice(item, prices) {
     const bubbleMultiplier = 1 + (prices.gold18kBubble || 0) / 100;
     return Math.round(prices.gold18kPerGram * bubbleMultiplier);
   }
-  if (item.autoPrice && item.priceSource === 'usd') {
-    return prices.usdRate;
+  if (item.autoPrice && (item.priceSource === 'usdt' || item.priceSource === 'usd')) {
+    return prices.usdtRate;
   }
   return item.unitPrice || 0;
 }
@@ -338,9 +364,10 @@ export function AssetProvider({ children }) {
     }));
 
     const goldTotal = withPercent.find((c) => c.name === 'طلا')?.total || 0;
+    const usdtTotal =
+      (withPercent.find((c) => c.name === 'USDT' || c.name === 'دلار')?.total || 0);
     const liquidTotal =
-      (withPercent.find((c) => c.name === 'دلار')?.total || 0) +
-      (withPercent.find((c) => c.name === 'درآمد ثابت')?.total || 0);
+      usdtTotal + (withPercent.find((c) => c.name === 'درآمد ثابت')?.total || 0);
 
     const allocation = withPercent
       .filter((c) => c.total > 0)
@@ -350,8 +377,8 @@ export function AssetProvider({ children }) {
       .filter((c) => c.percent > 60)
       .map((c) => ({ name: c.name, percent: c.percent }));
 
-    const usdEquivalent =
-      prices.usdRate > 0 ? portfolioTotal / prices.usdRate : 0;
+    const usdtEquivalent =
+      prices.usdtRate > 0 ? portfolioTotal / prices.usdtRate : 0;
 
     return {
       classTotals: withPercent,
@@ -360,7 +387,7 @@ export function AssetProvider({ children }) {
       liquidTotal,
       allocation,
       concentration,
-      usdEquivalent,
+      usdtEquivalent,
     };
   }, [state.assetClasses, prices, getItemTotal]);
 

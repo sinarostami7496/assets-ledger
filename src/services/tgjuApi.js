@@ -16,17 +16,17 @@ export function mapTgjuPrices(current) {
   }
 
   const onsUsd = parseTgjuNumber(current.ons?.p);
-  const usdRial = parseTgjuNumber(current.price_dollar_rl?.p);
+  const usdtRial = parseTgjuNumber(current['crypto-tether-irr']?.p);
   const geram18Rial = parseTgjuNumber(current.geram18?.p);
 
-  if (onsUsd == null || usdRial == null || geram18Rial == null) {
+  if (onsUsd == null || usdtRial == null || geram18Rial == null) {
     throw new Error('فیلدهای قیمت در پاسخ TGJU یافت نشد');
   }
 
-  const usdRate = Math.round(usdRial / 10);
+  const usdtRate = Math.round(usdtRial / 10);
   const gold18kPerGram = Math.round(geram18Rial / 10);
 
-  const theoretical18k = (onsUsd / GRAM_PER_OUNCE) * (18 / 24) * usdRate;
+  const theoretical18k = (onsUsd / GRAM_PER_OUNCE) * (18 / 24) * usdtRate;
   const gold18kBubble =
     theoretical18k > 0
       ? Math.round(((gold18kPerGram - theoretical18k) / theoretical18k) * 1000) / 10
@@ -34,7 +34,7 @@ export function mapTgjuPrices(current) {
 
   return {
     goldOunceGlobal: onsUsd,
-    usdRate,
+    usdtRate,
     gold18kPerGram,
     gold18kBubble,
   };
