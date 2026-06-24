@@ -1,7 +1,14 @@
+@font-face {
+  font-family: 'peyda';
+  src: url(../assets/fonts/PeydaWebNoEn-Regular.woff2) format('woff2');
+  font-weight: 400;
+  font-style: normal;
+}
+
 :root {
   --sidebar-width: 280px;
   --banner-height: auto;
-  --font-family: 'Vazirmatn', Tahoma, sans-serif;
+  --font-family: 'peyda', Vazirmatn, sans-serif;
   --text-muted: #94a3b8;
   --card-bg: rgba(30, 41, 59, 0.75);
   --card-border: rgba(255, 255, 255, 0.08);
