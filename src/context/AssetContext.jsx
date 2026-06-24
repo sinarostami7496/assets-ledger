@@ -1,13 +1,14 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useCallback } from 'react';
 import { generateId } from '../utils/format';
+import { fetchLivePrices, FETCH_INTERVAL_MS } from '../services/tgjuApi';
 
 const STORAGE_KEY = 'wealth-dashboard-v1';
 
 export const DEFAULT_PRICES = {
-  goldOunceGlobal: 2650,
-  usdRate: 65000,
-  gold18kPerGram: 4500000,
-  gold18kBubble: 8.5,
+  goldOunceGlobal: 3980,
+  usdRate: 161500,
+  gold18kPerGram: 16085200,
+  gold18kBubble: 0,
 };
 
 const INITIAL_WEALTH_HISTORY = [
@@ -100,9 +101,9 @@ export const INITIAL_ASSET_CLASSES = [
 const defaultState = {
   theme: 'dark',
   currentPage: 'dashboard',
-  livePriceEnabled: true,
   prices: { ...DEFAULT_PRICES },
-  priceOverrides: { ...DEFAULT_PRICES },
+  priceFetchStatus: 'cached',
+  lastSuccessfulFetch: null,
   assetClasses: INITIAL_ASSET_CLASSES,
   wealthHistory: INITIAL_WEALTH_HISTORY,
   expandedClasses: {},
@@ -114,15 +115,30 @@ function loadState() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return defaultState;
     const parsed = JSON.parse(raw);
-    return { ...defaultState, ...parsed };
+    return {
+      ...defaultState,
+      ...parsed,
+      priceFetchStatus: 'cached',
+      priceFlash: {},
+    };
   } catch {
     return defaultState;
   }
 }
 
 function persistState(state) {
-  const { priceFlash, ...toSave } = state;
+  const { priceFlash, priceFetchStatus, ...toSave } = state;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(toSave));
+}
+
+function buildPriceFlash(prev, next) {
+  const flash = {};
+  Object.keys(next).forEach((key) => {
+    if (prev[key] !== next[key]) {
+      flash[key] = next[key] > prev[key] ? 'up' : 'down';
+    }
+  });
+  return flash;
 }
 
 function reducer(state, action) {
@@ -133,21 +149,20 @@ function reducer(state, action) {
       return { ...state, sidebarOpen: !state.sidebarOpen };
     case 'SET_THEME':
       return { ...state, theme: action.theme };
-    case 'SET_LIVE_PRICE':
-      return { ...state, livePriceEnabled: action.enabled };
+    case 'SET_PRICE_FETCH_STATUS':
+      return { ...state, priceFetchStatus: action.status };
     case 'UPDATE_PRICES':
       return {
         ...state,
         prices: action.prices,
         priceFlash: action.flash || {},
+        lastSuccessfulFetch: action.lastSuccessfulFetch ?? state.lastSuccessfulFetch,
       };
-    case 'SET_PRICE_OVERRIDES':
-      return { ...state, priceOverrides: action.overrides };
-    case 'APPLY_PRICE_OVERRIDES':
+    case 'PRICE_FETCH_FAILED':
       return {
         ...state,
-        prices: { ...action.overrides },
-        livePriceEnabled: false,
+        priceFetchStatus: 'cached',
+        priceFlash: {},
       };
     case 'TOGGLE_CLASS':
       return {
@@ -204,7 +219,12 @@ function reducer(state, action) {
         ),
       };
     case 'IMPORT_STATE':
-      return { ...defaultState, ...action.payload };
+      return {
+        ...defaultState,
+        ...action.payload,
+        priceFetchStatus: 'cached',
+        priceFlash: {},
+      };
     case 'UPDATE_WEALTH_HISTORY':
       return { ...state, wealthHistory: action.history };
     default:
@@ -236,43 +256,56 @@ export function AssetProvider({ children }) {
     document.documentElement.setAttribute('data-bs-theme', state.theme);
   }, [state]);
 
-  // شبیه‌سازی نوسان قیمت هر ۱۰ ثانیه
+  // دریافت نرخ زنده از TGJU — هر ۱ دقیقه
   useEffect(() => {
-    if (!state.livePriceEnabled) return undefined;
+    let cancelled = false;
+    let flashTimer;
 
-    const tick = () => {
-      const current = stateRef.current.prices;
-      const fluctuate = (val, pct = 0.003) => {
-        const delta = val * (Math.random() * pct * 2 - pct);
-        return Math.max(0, Math.round((val + delta) * 100) / 100);
-      };
+    const pullPrices = async () => {
+      dispatch({ type: 'SET_PRICE_FETCH_STATUS', status: 'loading' });
 
-      const next = {
-        goldOunceGlobal: fluctuate(current.goldOunceGlobal, 0.002),
-        usdRate: Math.round(fluctuate(current.usdRate, 0.004)),
-        gold18kPerGram: Math.round(fluctuate(current.gold18kPerGram, 0.003)),
-        gold18kBubble: Math.round(fluctuate(current.gold18kBubble, 0.05) * 10) / 10,
-      };
+      try {
+        const next = await fetchLivePrices();
+        if (cancelled) return;
 
-      const flash = {};
-      Object.keys(next).forEach((key) => {
-        if (next[key] !== current[key]) {
-          flash[key] = next[key] > current[key] ? 'up' : 'down';
-        }
-      });
+        const current = stateRef.current.prices;
+        const flash = buildPriceFlash(current, next);
 
-      dispatch({ type: 'UPDATE_PRICES', prices: next, flash });
+        dispatch({
+          type: 'UPDATE_PRICES',
+          prices: next,
+          flash,
+          lastSuccessfulFetch: new Date().toISOString(),
+        });
+        dispatch({ type: 'SET_PRICE_FETCH_STATUS', status: 'live' });
 
-      setTimeout(() => {
-        dispatch({ type: 'UPDATE_PRICES', prices: next, flash: {} });
-      }, 800);
+        flashTimer = setTimeout(() => {
+          if (!cancelled) {
+            dispatch({
+              type: 'UPDATE_PRICES',
+              prices: next,
+              flash: {},
+              lastSuccessfulFetch: stateRef.current.lastSuccessfulFetch,
+            });
+          }
+        }, 800);
+      } catch {
+        if (cancelled) return;
+        dispatch({ type: 'PRICE_FETCH_FAILED' });
+      }
     };
 
-    const interval = setInterval(tick, 10000);
-    return () => clearInterval(interval);
-  }, [state.livePriceEnabled]);
+    pullPrices();
+    const interval = setInterval(pullPrices, FETCH_INTERVAL_MS);
 
-  const prices = state.livePriceEnabled ? state.prices : state.priceOverrides;
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+      clearTimeout(flashTimer);
+    };
+  }, []);
+
+  const prices = state.prices;
 
   const getItemTotal = useCallback(
     (item) => {
@@ -331,7 +364,6 @@ export function AssetProvider({ children }) {
     };
   }, [state.assetClasses, prices, getItemTotal]);
 
-  // به‌روزرسانی آخرین نقطه تاریخچه با ثروت فعلی
   useEffect(() => {
     const total = portfolioSummary.portfolioTotal;
     if (total <= 0) return;
@@ -358,7 +390,7 @@ export function AssetProvider({ children }) {
       getItemTotal,
       resolveUnitPrice: (item) => resolveUnitPrice(item, prices),
       exportFullState: () => {
-        const { priceFlash, sidebarOpen, ...rest } = state;
+        const { priceFlash, priceFetchStatus, sidebarOpen, ...rest } = state;
         return rest;
       },
     }),

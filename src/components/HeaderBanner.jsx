@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown, Menu } from 'lucide-react';
+import { TrendingUp, TrendingDown, Menu, Wifi, WifiOff, Loader2 } from 'lucide-react';
 import { useAssets } from '../context/AssetContext';
 import { formatCurrency, formatNumber } from '../utils/format';
 
@@ -9,9 +9,29 @@ const TICKER_ITEMS = [
   { key: 'gold18kBubble', label: 'حباب طلای ۱۸ عیار', suffix: '٪', decimals: 1, isPercent: true },
 ];
 
+const STATUS_CONFIG = {
+  live: {
+    icon: Wifi,
+    label: 'متصل — نرخ زنده',
+    className: 'status-live',
+  },
+  loading: {
+    icon: Loader2,
+    label: 'در حال دریافت نرخ...',
+    className: 'status-loading',
+  },
+  cached: {
+    icon: WifiOff,
+    label: 'آخرین نرخ ذخیره‌شده',
+    className: 'status-cached',
+  },
+};
+
 export default function HeaderBanner() {
   const { state, dispatch, prices } = useAssets();
   const flash = state.priceFlash || {};
+  const status = STATUS_CONFIG[state.priceFetchStatus] || STATUS_CONFIG.cached;
+  const StatusIcon = status.icon;
 
   return (
     <header className="header-banner sticky-top">
@@ -25,11 +45,18 @@ export default function HeaderBanner() {
           <Menu size={18} />
         </button>
         <div className="banner-title">
-          <span className="live-dot" />
+          <span
+            className={`live-status-badge ${status.className}`}
+            title={status.label}
+          >
+            <StatusIcon
+              size={14}
+              className={state.priceFetchStatus === 'loading' ? 'status-spin' : ''}
+            />
+            <span>{status.label}</span>
+          </span>
+          <span className="banner-divider" />
           <span>نرخ‌های لحظه‌ای بازار</span>
-          {!state.livePriceEnabled && (
-            <span className="badge bg-warning text-dark ms-2">دستی</span>
-          )}
         </div>
       </div>
 

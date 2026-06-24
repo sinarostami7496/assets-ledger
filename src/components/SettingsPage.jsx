@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useRef } from 'react';
 import {
   Moon,
   Sun,
@@ -6,39 +6,22 @@ import {
   Upload,
   FileSpreadsheet,
   FileText,
-  RefreshCw,
-  Pause,
-  Play,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
-import { useAssets, DEFAULT_PRICES } from '../context/AssetContext';
+import { useAssets } from '../context/AssetContext';
 import { formatCurrency, formatPercent, toPersianDigits } from '../utils/format';
 
 export default function SettingsPage() {
-  const { state, dispatch, portfolioSummary, exportFullState, prices } = useAssets();
+  const { state, dispatch, portfolioSummary, exportFullState } = useAssets();
   const fileInputRef = useRef(null);
-  const [overrides, setOverrides] = useState({
-    ...state.priceOverrides,
-  });
 
   const toggleTheme = () => {
     dispatch({
       type: 'SET_THEME',
       theme: state.theme === 'dark' ? 'light' : 'dark',
     });
-  };
-
-  const applyOverrides = (e) => {
-    e.preventDefault();
-    dispatch({ type: 'APPLY_PRICE_OVERRIDES', overrides: { ...overrides } });
-  };
-
-  const resetPrices = () => {
-    setOverrides({ ...DEFAULT_PRICES });
-    dispatch({ type: 'SET_LIVE_PRICE', enabled: true });
-    dispatch({ type: 'UPDATE_PRICES', prices: { ...DEFAULT_PRICES } });
   };
 
   const buildExportRows = () => {
@@ -205,7 +188,7 @@ export default function SettingsPage() {
     <div className="page settings-page">
       <div className="page-header">
         <h2>⚙️ تنظیمات و پشتیبان‌گیری</h2>
-        <p className="text-muted mb-0">مدیریت ظاهر، قیمت‌ها و پشتیبان داده</p>
+        <p className="text-muted mb-0">مدیریت ظاهر و پشتیبان داده</p>
       </div>
 
       <div className="row g-4">
@@ -226,103 +209,6 @@ export default function SettingsPage() {
                 </>
               )}
             </button>
-          </div>
-        </div>
-
-        <div className="col-lg-6">
-          <div className="settings-card">
-            <h5>به‌روزرسانی قیمت زنده</h5>
-            <p className="text-muted small">
-              {state.livePriceEnabled
-                ? 'نرخ‌ها هر ۱۰ ثانیه به‌صورت شبیه‌سازی‌شده به‌روز می‌شوند.'
-                : 'حالت دستی فعال است — از فرم زیر استفاده کنید.'}
-            </p>
-            <div className="d-flex gap-2 flex-wrap">
-              <button
-                type="button"
-                className={`btn ${state.livePriceEnabled ? 'btn-warning' : 'btn-success'}`}
-                onClick={() =>
-                  dispatch({ type: 'SET_LIVE_PRICE', enabled: !state.livePriceEnabled })
-                }
-              >
-                {state.livePriceEnabled ? (
-                  <>
-                    <Pause size={16} className="me-1" /> توقف شبیه‌سازی
-                  </>
-                ) : (
-                  <>
-                    <Play size={16} className="me-1" /> فعال‌سازی زنده
-                  </>
-                )}
-              </button>
-              <button type="button" className="btn btn-outline-secondary" onClick={resetPrices}>
-                <RefreshCw size={16} className="me-1" /> بازنشانی پیش‌فرض
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="col-12">
-          <div className="settings-card">
-            <h5>تنظیم دستی نرخ‌ها</h5>
-            <form onSubmit={applyOverrides}>
-              <div className="row g-3">
-                <div className="col-md-6 col-lg-3">
-                  <label className="form-label">انس جهانی طلا ($)</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={overrides.goldOunceGlobal}
-                    onChange={(e) =>
-                      setOverrides({ ...overrides, goldOunceGlobal: Number(e.target.value) })
-                    }
-                    step="0.01"
-                  />
-                </div>
-                <div className="col-md-6 col-lg-3">
-                  <label className="form-label">نرخ دلار (تومان)</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={overrides.usdRate}
-                    onChange={(e) =>
-                      setOverrides({ ...overrides, usdRate: Number(e.target.value) })
-                    }
-                  />
-                </div>
-                <div className="col-md-6 col-lg-3">
-                  <label className="form-label">طلای ۱۸ عیار (تومان/گرم)</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={overrides.gold18kPerGram}
-                    onChange={(e) =>
-                      setOverrides({ ...overrides, gold18kPerGram: Number(e.target.value) })
-                    }
-                  />
-                </div>
-                <div className="col-md-6 col-lg-3">
-                  <label className="form-label">حباب طلا (٪)</label>
-                  <input
-                    type="number"
-                    className="form-control"
-                    value={overrides.gold18kBubble}
-                    onChange={(e) =>
-                      setOverrides({ ...overrides, gold18kBubble: Number(e.target.value) })
-                    }
-                    step="0.1"
-                  />
-                </div>
-              </div>
-              <div className="mt-3 d-flex align-items-center gap-3 flex-wrap">
-                <button type="submit" className="btn btn-primary">
-                  اعمال نرخ‌های دستی
-                </button>
-                <small className="text-muted">
-                  نرخ فعلی دلار: {formatCurrency(prices.usdRate, '')}
-                </small>
-              </div>
-            </form>
           </div>
         </div>
 
