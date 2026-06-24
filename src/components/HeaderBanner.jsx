@@ -1,0 +1,63 @@
+import { TrendingUp, TrendingDown, Menu } from 'lucide-react';
+import { useAssets } from '../context/AssetContext';
+import { formatCurrency, formatNumber } from '../utils/format';
+
+const TICKER_ITEMS = [
+  { key: 'goldOunceGlobal', label: 'انس جهانی طلا', suffix: ' $', decimals: 2 },
+  { key: 'usdRate', label: 'قیمت دلار آزاد', suffix: ' تومان', decimals: 0 },
+  { key: 'gold18kPerGram', label: 'طلای ۱۸ عیار', suffix: ' تومان/گرم', decimals: 0 },
+  { key: 'gold18kBubble', label: 'حباب طلای ۱۸ عیار', suffix: '٪', decimals: 1, isPercent: true },
+];
+
+export default function HeaderBanner() {
+  const { state, dispatch, prices } = useAssets();
+  const flash = state.priceFlash || {};
+
+  return (
+    <header className="header-banner sticky-top">
+      <div className="banner-top">
+        <button
+          type="button"
+          className="btn btn-sm btn-outline-light sidebar-toggle d-lg-none"
+          onClick={() => dispatch({ type: 'TOGGLE_SIDEBAR' })}
+          aria-label="باز کردن منو"
+        >
+          <Menu size={18} />
+        </button>
+        <div className="banner-title">
+          <span className="live-dot" />
+          <span>نرخ‌های لحظه‌ای بازار</span>
+          {!state.livePriceEnabled && (
+            <span className="badge bg-warning text-dark ms-2">دستی</span>
+          )}
+        </div>
+      </div>
+
+      <div className="ticker-row">
+        {TICKER_ITEMS.map(({ key, label, suffix, decimals, isPercent }) => {
+          const value = prices[key];
+          const direction = flash[key];
+          const displayValue = isPercent
+            ? formatNumber(value, decimals) + suffix
+            : key === 'goldOunceGlobal'
+              ? `$${formatNumber(value, decimals)}`
+              : formatCurrency(value, suffix);
+
+          return (
+            <div
+              key={key}
+              className={`ticker-item ${direction ? `flash-${direction}` : ''}`}
+            >
+              <span className="ticker-label">{label}</span>
+              <span className="ticker-value">
+                {direction === 'up' && <TrendingUp size={14} className="text-success me-1" />}
+                {direction === 'down' && <TrendingDown size={14} className="text-danger me-1" />}
+                {displayValue}
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </header>
+  );
+}
