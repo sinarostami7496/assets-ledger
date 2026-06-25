@@ -9,6 +9,10 @@ export function parseTgjuNumber(value) {
   return Number.isFinite(num) ? num : null;
 }
 
+function rialToToman(rial) {
+  return rial == null ? null : Math.round(rial / 10);
+}
+
 /** تبدیل پاسخ TGJU به ساختار قیمت داشبورد */
 export function mapTgjuPrices(current) {
   if (!current) {
@@ -23,8 +27,8 @@ export function mapTgjuPrices(current) {
     throw new Error('فیلدهای قیمت در پاسخ TGJU یافت نشد');
   }
 
-  const usdtRate = Math.round(usdtRial / 10);
-  const gold18kPerGram = Math.round(geram18Rial / 10);
+  const usdtRate = rialToToman(usdtRial);
+  const gold18kPerGram = rialToToman(geram18Rial);
 
   const theoretical18k = (onsUsd / GRAM_PER_OUNCE) * (18 / 24) * usdtRate;
   const gold18kBubble =
@@ -32,11 +36,21 @@ export function mapTgjuPrices(current) {
       ? Math.round(((gold18kPerGram - theoretical18k) / theoretical18k) * 1000) / 10
       : 0;
 
+  const usdRial =
+    parseTgjuNumber(current['price_dollar_rl']?.p) ??
+    parseTgjuNumber(current['price_dollar_dt']?.p);
+
   return {
     goldOunceGlobal: onsUsd,
     usdtRate,
+    usdRate: rialToToman(usdRial),
     gold18kPerGram,
     gold18kBubble,
+    coinSekee: rialToToman(parseTgjuNumber(current.sekee?.p)),
+    coinSekeb: rialToToman(parseTgjuNumber(current.sekeb?.p)),
+    coinGerami: rialToToman(parseTgjuNumber(current.gerami?.p)),
+    coinNim: rialToToman(parseTgjuNumber(current.nim?.p)),
+    coinRob: rialToToman(parseTgjuNumber(current.rob?.p)),
   };
 }
 

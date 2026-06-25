@@ -7,8 +7,14 @@ const STORAGE_KEY = 'wealth-dashboard-v1';
 export const DEFAULT_PRICES = {
   goldOunceGlobal: 3980,
   usdtRate: 166869,
+  usdRate: 161500,
   gold18kPerGram: 16085200,
   gold18kBubble: 0,
+  coinSekee: 163010000,
+  coinSekeb: 158500000,
+  coinGerami: 25500000,
+  coinNim: 85500000,
+  coinRob: 49450000,
 };
 
 const INITIAL_WEALTH_HISTORY = [
@@ -263,14 +269,28 @@ function reducer(state, action) {
 
 const AssetContext = createContext(null);
 
-/** محاسبه قیمت واحد با توجه به منبع قیمت زنده */
-export function resolveUnitPrice(item, prices) {
-  if (item.autoPrice && item.priceSource === 'gold18k') {
+const LIVE_PRICE_RESOLVERS = {
+  gold18k: (prices) => {
     const bubbleMultiplier = 1 + (prices.gold18kBubble || 0) / 100;
     return Math.round(prices.gold18kPerGram * bubbleMultiplier);
-  }
-  if (item.autoPrice && (item.priceSource === 'usdt' || item.priceSource === 'usd')) {
-    return prices.usdtRate;
+  },
+  usdt: (prices) => prices.usdtRate,
+  usd: (prices) => prices.usdRate,
+  sekee: (prices) => prices.coinSekee,
+  sekeb: (prices) => prices.coinSekeb,
+  gerami: (prices) => prices.coinGerami,
+  nim: (prices) => prices.coinNim,
+  rob: (prices) => prices.coinRob,
+};
+
+/** محاسبه قیمت واحد با توجه به منبع قیمت زنده */
+export function resolveUnitPrice(item, prices) {
+  if (item.autoPrice && item.priceSource) {
+    const resolve = LIVE_PRICE_RESOLVERS[item.priceSource];
+    if (resolve) {
+      const value = resolve(prices);
+      return value ?? 0;
+    }
   }
   return item.unitPrice || 0;
 }

@@ -19,6 +19,25 @@ const UNIT_OPTIONS = ['سهم', 'عدد', 'گرم', 'دلار', 'واحد', 'د�
   label: unit,
 }));
 
+const PRICE_SOURCE_OPTIONS = [
+  { value: 'gold18k', label: 'طلای ۱۸ عیار (گرم)', unit: 'گرم', group: 'طلا' },
+  { value: 'sekee', label: 'سکه تمام (امامی)', unit: 'عدد', group: 'سکه' },
+  { value: 'sekeb', label: 'سکه تمام (بهار آزادی)', unit: 'عدد', group: 'سکه' },
+  { value: 'gerami', label: 'سکه گرمی', unit: 'عدد', group: 'سکه' },
+  { value: 'nim', label: 'نیم سکه', unit: 'عدد', group: 'سکه' },
+  { value: 'rob', label: 'ربع سکه', unit: 'عدد', group: 'سکه' },
+  { value: 'usdt', label: 'نرخ USDT', unit: 'USDT', group: 'ارز' },
+  { value: 'usd', label: 'نرخ دلار', unit: 'دلار', group: 'ارز' },
+];
+
+function getPriceSourceOption(priceSource) {
+  return PRICE_SOURCE_OPTIONS.find((option) => option.value === priceSource);
+}
+
+function getUnitForPriceSource(priceSource, fallback = 'عدد') {
+  return getPriceSourceOption(priceSource)?.unit ?? fallback;
+}
+
 function getUnitOptions(currentUnit) {
   if (!currentUnit || UNIT_OPTIONS.some((option) => option.value === currentUnit)) {
     return UNIT_OPTIONS;
@@ -71,7 +90,7 @@ function SortableColumnHeader({ label, sortKey, sortConfig, onSort }) {
 }
 
 export default function AssetLedgerPage() {
-  const { state, dispatch, portfolioSummary, prices, resolveUnitPrice } = useAssets();
+  const { state, dispatch, portfolioSummary, resolveUnitPrice } = useAssets();
   const { displayCurrency, displayNumber, displayPercent } = useSensitiveDisplay();
   const [newClassName, setNewClassName] = useState('');
   const [addingToClass, setAddingToClass] = useState(null);
@@ -97,7 +116,7 @@ export default function AssetLedgerPage() {
       ...EMPTY_ITEM_FORM,
       autoPrice: !!priceSource,
       priceSource,
-      unit: priceSource === 'gold18k' ? 'گرم' : priceSource === 'usdt' ? 'USDT' : 'عدد',
+      unit: priceSource ? getUnitForPriceSource(priceSource) : 'عدد',
     });
   };
 
@@ -427,27 +446,52 @@ export default function AssetLedgerPage() {
                     <select
                       className="form-select"
                       value={itemForm.priceSource || 'gold18k'}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        const priceSource = e.target.value;
                         setItemForm({
                           ...itemForm,
-                          priceSource: e.target.value,
-                          unit:
-                            e.target.value === 'gold18k'
-                              ? 'گرم'
-                              : e.target.value === 'usdt'
-                                ? 'USDT'
-                                : itemForm.unit,
-                        })
-                      }
+                          priceSource,
+                          unit: getUnitForPriceSource(priceSource, itemForm.unit),
+                        });
+                      }}
                     >
-                      <option value="gold18k">طلای ۱۸ عیار (گرم)</option>
-                      <option value="usdt">نرخ USDT</option>
+                      <optgroup label="طلا">
+                        {PRICE_SOURCE_OPTIONS.filter((option) => option.group === 'طلا').map(
+                          (option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ),
+                        )}
+                      </optgroup>
+                      <optgroup label="سکه‌های طلا">
+                        {PRICE_SOURCE_OPTIONS.filter((option) => option.group === 'سکه').map(
+                          (option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ),
+                        )}
+                      </optgroup>
+                      <optgroup label="ارز">
+                        {PRICE_SOURCE_OPTIONS.filter((option) => option.group === 'ارز').map(
+                          (option) => (
+                            <option key={option.value} value={option.value}>
+                              {option.label}
+                            </option>
+                          ),
+                        )}
+                      </optgroup>
                     </select>
                     <small className="text-muted">
                       نرخ فعلی:{' '}
-                      {itemForm.priceSource === 'usdt' || itemForm.priceSource === 'usd'
-                        ? displayCurrency(prices.usdtRate)
-                        : displayCurrency(resolveUnitPrice({ autoPrice: true, priceSource: 'gold18k', unitPrice: 0 }))}
+                      {displayCurrency(
+                        resolveUnitPrice({
+                          autoPrice: true,
+                          priceSource: itemForm.priceSource || 'gold18k',
+                          unitPrice: 0,
+                        }),
+                      )}
                     </small>
                   </div>
                 ) : (
