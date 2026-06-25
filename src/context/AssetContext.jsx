@@ -108,6 +108,7 @@ const defaultState = {
   wealthHistory: INITIAL_WEALTH_HISTORY,
   expandedClasses: {},
   sidebarOpen: false,
+  showPrices: true,
 };
 
 function migratePrices(prices) {
@@ -175,6 +176,8 @@ function reducer(state, action) {
       return { ...state, sidebarOpen: !state.sidebarOpen };
     case 'SET_THEME':
       return { ...state, theme: action.theme };
+    case 'TOGGLE_SHOW_PRICES':
+      return { ...state, showPrices: !state.showPrices };
     case 'SET_PRICE_FETCH_STATUS':
       return { ...state, priceFetchStatus: action.status };
     case 'UPDATE_PRICES':

@@ -19,7 +19,8 @@ import {
   AlertTriangle,
 } from 'lucide-react';
 import { useAssets } from '../context/AssetContext';
-import { formatCurrency, formatNumber, formatPercent, toPersianDigits } from '../utils/format';
+import { useSensitiveDisplay } from '../hooks/useSensitiveDisplay';
+import { toPersianDigits } from '../utils/format';
 
 const CHART_COLORS = ['#f0b429', '#4ade80', '#60a5fa', '#c084fc', '#fb7185', '#2dd4bf', '#f97316'];
 
@@ -30,22 +31,9 @@ const KPI_CONFIG = [
   { key: 'liquidTotal', label: 'ارزش نقدینگی و USDT', suffix: ' تومان', icon: Banknote, color: 'kpi-green' },
 ];
 
-function CustomTooltip({ active, payload, label }) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="chart-tooltip">
-      <p className="mb-1 fw-semibold">{label}</p>
-      {payload.map((entry) => (
-        <p key={entry.name} style={{ color: entry.color }} className="mb-0 small">
-          {entry.name}: {formatCurrency(entry.value)}
-        </p>
-      ))}
-    </div>
-  );
-}
-
 export default function DashboardPage() {
   const { portfolioSummary, state, prices } = useAssets();
+  const { showPrices, displayCurrency, displayNumber, displayPercent, mask } = useSensitiveDisplay();
   const { portfolioTotal, goldTotal, liquidTotal, usdtEquivalent, allocation, concentration } =
     portfolioSummary;
 
@@ -67,6 +55,20 @@ export default function DashboardPage() {
     total: h.total,
   }));
 
+  function CustomTooltip({ active, payload, label }) {
+    if (!active || !payload?.length) return null;
+    return (
+      <div className="chart-tooltip">
+        <p className="mb-1 fw-semibold">{label}</p>
+        {payload.map((entry) => (
+          <p key={entry.name} style={{ color: entry.color }} className="mb-0 small">
+            {entry.name}: {displayCurrency(entry.value)}
+          </p>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="page dashboard-page">
       <div className="page-header">
@@ -85,8 +87,8 @@ export default function DashboardPage() {
                 <p className="kpi-label">{label}</p>
                 <p className="kpi-value">
                   {isUsdt
-                    ? `${formatNumber(kpiValues[key], 0)} USDT`
-                    : formatCurrency(kpiValues[key], suffix)}
+                    ? `${displayNumber(kpiValues[key], 0)} USDT`
+                    : displayCurrency(kpiValues[key], suffix)}
                 </p>
               </div>
             </div>
@@ -103,7 +105,7 @@ export default function DashboardPage() {
               {concentration.map((c) => (
                 <p key={c.name} className="mb-1">
                   ⚠️ هشدار ریسک: بیش از ۶۰٪ از کل دارایی شما در کلاس{' '}
-                  <strong>{c.name}</strong> ({formatPercent(c.percent)}) متمرکز شده است.
+                  <strong>{c.name}</strong> ({displayPercent(c.percent)}) متمرکز شده است.
                   برای مدیریت ریسک، تنوع‌بخشی به سبد پیشنهاد می‌شود.
                 </p>
               ))}
@@ -151,7 +153,7 @@ export default function DashboardPage() {
                         style={{ background: CHART_COLORS[i % CHART_COLORS.length] }}
                       />
                       <span>{item.name}</span>
-                      <span className="ms-auto fw-semibold">{formatPercent(item.percent)}</span>
+                      <span className="ms-auto fw-semibold">{displayPercent(item.percent)}</span>
                     </div>
                   ))}
                 </div>
@@ -176,7 +178,11 @@ export default function DashboardPage() {
                 />
                 <YAxis
                   tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
-                  tickFormatter={(v) => toPersianDigits((v / 1_000_000).toFixed(0)) + 'M'}
+                  tickFormatter={(v) =>
+                    showPrices
+                      ? toPersianDigits((v / 1_000_000).toFixed(0)) + 'M'
+                      : mask('')
+                  }
                 />
                 <Tooltip content={<CustomTooltip />} />
                 <Line
@@ -191,8 +197,8 @@ export default function DashboardPage() {
               </LineChart>
             </ResponsiveContainer>
             <p className="text-muted small text-center mt-2 mb-0">
-              نرخ USDT فعلی: {formatCurrency(prices.usdtRate, '')} — معادل:{' '}
-              {formatNumber(usdtEquivalent, 0)} USDT
+              نرخ USDT فعلی: {displayCurrency(prices.usdtRate, '')} — معادل:{' '}
+              {displayNumber(usdtEquivalent, 0)} USDT
             </p>
           </div>
         </div>

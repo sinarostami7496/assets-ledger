@@ -275,6 +275,32 @@ body {
   background: rgba(255, 255, 255, 0.2);
 }
 
+.balance-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  white-space: nowrap;
+  border-color: rgba(255, 255, 255, 0.35) !important;
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.balance-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.55) !important;
+  color: #fff !important;
+}
+
+.balance-toggle-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+@media (max-width: 575.98px) {
+  .balance-toggle-label {
+    display: none;
+  }
+}
+
 .live-dot {
   width: 8px;
   height: 8px;
@@ -302,7 +328,7 @@ body {
   transition: background 0.3s ease;
 }
 
-.ticker-item:first-child {
+.ticker-item:last-child {
   border-left: none;
 }
 

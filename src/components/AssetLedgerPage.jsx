@@ -11,7 +11,8 @@ import {
   Calculator,
 } from 'lucide-react';
 import { useAssets } from '../context/AssetContext';
-import { formatCurrency, formatNumber, formatPercent, generateId } from '../utils/format';
+import { useSensitiveDisplay } from '../hooks/useSensitiveDisplay';
+import { generateId } from '../utils/format';
 
 const UNIT_OPTIONS = ['سهم', 'عدد', 'گرم', 'دلار', 'واحد', 'دستگاه'].map((unit) => ({
   value: unit,
@@ -71,6 +72,7 @@ function SortableColumnHeader({ label, sortKey, sortConfig, onSort }) {
 
 export default function AssetLedgerPage() {
   const { state, dispatch, portfolioSummary, prices, resolveUnitPrice } = useAssets();
+  const { displayCurrency, displayNumber, displayPercent } = useSensitiveDisplay();
   const [newClassName, setNewClassName] = useState('');
   const [addingToClass, setAddingToClass] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
@@ -242,8 +244,8 @@ export default function AssetLedgerPage() {
                     <td>—</td>
                     <td>—</td>
                     <td>—</td>
-                    <td className="fw-semibold">{formatCurrency(assetClass.total)}</td>
-                    <td>{formatPercent(assetClass.percent)}</td>
+                    <td className="fw-semibold">{displayCurrency(assetClass.total)}</td>
+                    <td>{displayPercent(assetClass.percent)}</td>
                     <td onClick={(e) => e.stopPropagation()}>
                       <div className="btn-group btn-group-sm">
                         <button
@@ -295,19 +297,19 @@ export default function AssetLedgerPage() {
                       <tr key={item.id} className="item-row">
                         <td />
                         <td className="ps-4">{item.name}</td>
-                        <td>{formatNumber(item.quantity)}</td>
+                        <td>{displayNumber(item.quantity)}</td>
                         <td>{item.unit}</td>
                         <td>
                           {item.autoPrice ? (
                             <span className="badge bg-info-subtle text-info-emphasis">
-                              خودکار: {formatCurrency(resolveUnitPrice(item))}
+                              خودکار: {displayCurrency(resolveUnitPrice(item))}
                             </span>
                           ) : (
-                            formatCurrency(item.unitPrice)
+                            displayCurrency(item.unitPrice)
                           )}
                         </td>
-                        <td>{formatCurrency(item.total)}</td>
-                        <td>{formatPercent(item.percent)}</td>
+                        <td>{displayCurrency(item.total)}</td>
+                        <td>{displayPercent(item.percent)}</td>
                         <td>
                           <div className="btn-group btn-group-sm">
                             <button
@@ -344,8 +346,8 @@ export default function AssetLedgerPage() {
               <td colSpan={5} className="text-end fw-bold fs-5">
                 جمع کل دارایی‌ها
               </td>
-              <td className="fw-bold fs-5 text-primary">{formatCurrency(portfolioTotal)}</td>
-              <td>{formatPercent(portfolioTotal > 0 ? 100 : 0, 0)}</td>
+              <td className="fw-bold fs-5 text-primary">{displayCurrency(portfolioTotal)}</td>
+              <td>{displayPercent(portfolioTotal > 0 ? 100 : 0, 0)}</td>
               <td />
             </tr>
           </tbody>
@@ -444,8 +446,8 @@ export default function AssetLedgerPage() {
                     <small className="text-muted">
                       نرخ فعلی:{' '}
                       {itemForm.priceSource === 'usdt' || itemForm.priceSource === 'usd'
-                        ? formatCurrency(prices.usdtRate)
-                        : formatCurrency(resolveUnitPrice({ autoPrice: true, priceSource: 'gold18k', unitPrice: 0 }))}
+                        ? displayCurrency(prices.usdtRate)
+                        : displayCurrency(resolveUnitPrice({ autoPrice: true, priceSource: 'gold18k', unitPrice: 0 }))}
                     </small>
                   </div>
                 ) : (

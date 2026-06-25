@@ -1,5 +1,15 @@
-import { TrendingUp, TrendingDown, Menu, Wifi, WifiOff, Loader2 } from 'lucide-react';
+import {
+  TrendingUp,
+  TrendingDown,
+  Menu,
+  Wifi,
+  WifiOff,
+  Loader2,
+  Eye,
+  EyeOff,
+} from 'lucide-react';
 import { useAssets } from '../context/AssetContext';
+import { useSensitiveDisplay } from '../hooks/useSensitiveDisplay';
 import { formatCurrency, formatNumber } from '../utils/format';
 
 const TICKER_ITEMS = [
@@ -29,6 +39,7 @@ const STATUS_CONFIG = {
 
 export default function HeaderBanner() {
   const { state, dispatch, prices } = useAssets();
+  const { showPrices } = useSensitiveDisplay();
   const flash = state.priceFlash || {};
   const status = STATUS_CONFIG[state.priceFetchStatus] || STATUS_CONFIG.cached;
   const StatusIcon = status.icon;
@@ -58,6 +69,18 @@ export default function HeaderBanner() {
           <span className="banner-divider" />
           <span>نرخ‌های لحظه‌ای بازار</span>
         </div>
+        <button
+          type="button"
+          className="btn btn-sm btn-outline-light balance-toggle-btn ms-auto"
+          onClick={() => dispatch({ type: 'TOGGLE_SHOW_PRICES' })}
+          aria-label={showPrices ? 'مخفی کردن موجودی' : 'نمایش موجودی'}
+          title={showPrices ? 'مخفی کردن موجودی' : 'نمایش موجودی'}
+        >
+          {showPrices ? <Eye size={18} /> : <EyeOff size={18} />}
+          <span className="balance-toggle-label">
+            {showPrices ? 'مخفی کردن موجودی' : 'نمایش موجودی'}
+          </span>
+        </button>
       </div>
 
       <div className="ticker-row">
