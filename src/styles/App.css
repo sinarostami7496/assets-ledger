@@ -15,6 +15,7 @@
   --gradient-bg: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
   --gold: #f0b429;
   --gold-glow: rgba(240, 180, 41, 0.25);
+  font-size: clamp(10px, 1.1vw + 10px, 18px);
 }
 
 [data-bs-theme='light'] {
@@ -495,7 +496,6 @@ body {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
   border-radius: 16px;
-  overflow: hidden;
 }
 
 .ledger-table {
