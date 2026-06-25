@@ -488,6 +488,31 @@ body {
   padding: 1rem 0.75rem;
 }
 
+.ledger-sort-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.ledger-sort-btn:hover,
+.ledger-sort-btn.is-active {
+  color: var(--gold);
+}
+
+.ledger-sort-icon {
+  display: inline-flex;
+  align-items: center;
+  line-height: 0;
+}
+
 .ledger-table tbody td {
   padding: 0.85rem 0.75rem;
   border-color: var(--card-border);

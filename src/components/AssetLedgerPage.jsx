@@ -4,6 +4,7 @@ import Select from 'react-select';
 import {
   ChevronDown,
   ChevronLeft,
+  ChevronUp,
   Plus,
   Pencil,
   Trash2,
@@ -33,12 +34,48 @@ const EMPTY_ITEM_FORM = {
   priceSource: null,
 };
 
+const DEFAULT_CLASS_SORT = { key: 'percent', direction: 'desc' };
+
+function compareClassRows(a, b, sortKey, direction) {
+  const aValue = Number(a[sortKey]) || 0;
+  const bValue = Number(b[sortKey]) || 0;
+  if (aValue !== bValue) {
+    return direction === 'asc' ? aValue - bValue : bValue - aValue;
+  }
+  return a.name.localeCompare(b.name, 'fa');
+}
+
+function SortableColumnHeader({ label, sortKey, sortConfig, onSort }) {
+  const isActive = sortConfig.key === sortKey;
+
+  return (
+    <th>
+      <button
+        type="button"
+        className={`ledger-sort-btn${isActive ? ' is-active' : ''}`}
+        onClick={() => onSort(sortKey)}
+        aria-sort={
+          isActive ? (sortConfig.direction === 'asc' ? 'ascending' : 'descending') : 'none'
+        }
+      >
+        <span>{label}</span>
+        {isActive && (
+          <span className="ledger-sort-icon" aria-hidden="true">
+            {sortConfig.direction === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </span>
+        )}
+      </button>
+    </th>
+  );
+}
+
 export default function AssetLedgerPage() {
   const { state, dispatch, portfolioSummary, prices, resolveUnitPrice } = useAssets();
   const [newClassName, setNewClassName] = useState('');
   const [addingToClass, setAddingToClass] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
   const [itemForm, setItemForm] = useState(EMPTY_ITEM_FORM);
+  const [classSort, setClassSort] = useState(DEFAULT_CLASS_SORT);
   const unitOptions = useMemo(() => getUnitOptions(itemForm.unit), [itemForm.unit]);
   const selectedUnit = useMemo(
     () => unitOptions.find((option) => option.value === itemForm.unit) ?? UNIT_OPTIONS[1],
@@ -105,6 +142,26 @@ export default function AssetLedgerPage() {
 
   const { classTotals, portfolioTotal } = portfolioSummary;
 
+  const sortedClassTotals = useMemo(
+    () =>
+      [...classTotals].sort((a, b) =>
+        compareClassRows(a, b, classSort.key, classSort.direction),
+      ),
+    [classTotals, classSort],
+  );
+
+  const handleClassSort = (sortKey) => {
+    setClassSort((current) => {
+      if (current.key === sortKey) {
+        return {
+          key: sortKey,
+          direction: current.direction === 'asc' ? 'desc' : 'asc',
+        };
+      }
+      return { key: sortKey, direction: 'desc' };
+    });
+  };
+
   return (
     <div className="page ledger-page">
       <div className="page-header d-flex flex-wrap justify-content-between align-items-start gap-3">
@@ -147,13 +204,23 @@ export default function AssetLedgerPage() {
               <th>مقدار / تعداد</th>
               <th>واحد</th>
               <th>ارزش واحد (تومان)</th>
-              <th>ارزش کل (تومان)</th>
-              <th>درصد از کل ثروت</th>
+              <SortableColumnHeader
+                label="ارزش کل (تومان)"
+                sortKey="total"
+                sortConfig={classSort}
+                onSort={handleClassSort}
+              />
+              <SortableColumnHeader
+                label="درصد از کل ثروت"
+                sortKey="percent"
+                sortConfig={classSort}
+                onSort={handleClassSort}
+              />
               <th>عملیات</th>
             </tr>
           </thead>
           <tbody>
-            {classTotals.map((assetClass) => {
+            {sortedClassTotals.map((assetClass) => {
               const expanded = state.expandedClasses[assetClass.id] !== false;
               const hasItems = assetClass.items.length > 0;
 
