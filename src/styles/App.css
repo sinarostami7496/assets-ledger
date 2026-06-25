@@ -542,6 +542,56 @@ body {
   direction: rtl;
 }
 
+/* ─── react-select (unit field) ─── */
+.unit-select__control {
+  min-height: 38px;
+  border-color: var(--bs-border-color, #dee2e6);
+  box-shadow: none;
+}
+
+.unit-select__control:hover {
+  border-color: var(--bs-border-color, #dee2e6);
+}
+
+.unit-select__control--is-focused {
+  border-color: var(--gold, #86b7fe);
+  box-shadow: 0 0 0 0.2rem var(--gold-glow, rgba(13, 110, 253, 0.25));
+}
+
+.unit-select__menu {
+  z-index: 1060;
+}
+
+[data-bs-theme='dark'] .unit-select__control {
+  background: rgba(15, 23, 42, 0.6);
+  border-color: var(--card-border);
+  color: inherit;
+}
+
+[data-bs-theme='dark'] .unit-select__control--is-focused {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 0.2rem var(--gold-glow);
+}
+
+[data-bs-theme='dark'] .unit-select__menu {
+  background: #1e293b;
+  border: 1px solid var(--card-border);
+}
+
+[data-bs-theme='dark'] .unit-select__option--is-focused {
+  background: rgba(148, 163, 184, 0.15);
+}
+
+[data-bs-theme='dark'] .unit-select__option--is-selected {
+  background: var(--gold);
+  color: #0f172a;
+}
+
+[data-bs-theme='dark'] .unit-select__single-value {
+  color: inherit;
+}
+
 /* ─── Form controls dark mode polish ─── */
 [data-bs-theme='dark'] .form-control,
 [data-bs-theme='dark'] .form-select {

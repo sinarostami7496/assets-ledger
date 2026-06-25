@@ -1,5 +1,6 @@
-import { Fragment, useState } from 'react';
+import { Fragment, useMemo, useState } from 'react';
 import { NumericFormat } from 'react-number-format';
+import Select from 'react-select';
 import {
   ChevronDown,
   ChevronLeft,
@@ -10,6 +11,18 @@ import {
 } from 'lucide-react';
 import { useAssets } from '../context/AssetContext';
 import { formatCurrency, formatNumber, formatPercent, generateId } from '../utils/format';
+
+const UNIT_OPTIONS = ['سهم', 'عدد', 'گرم', 'دلار', 'واحد', 'دستگاه'].map((unit) => ({
+  value: unit,
+  label: unit,
+}));
+
+function getUnitOptions(currentUnit) {
+  if (!currentUnit || UNIT_OPTIONS.some((option) => option.value === currentUnit)) {
+    return UNIT_OPTIONS;
+  }
+  return [...UNIT_OPTIONS, { value: currentUnit, label: currentUnit }];
+}
 
 const EMPTY_ITEM_FORM = {
   name: '',
@@ -26,6 +39,11 @@ export default function AssetLedgerPage() {
   const [addingToClass, setAddingToClass] = useState(null);
   const [editingItem, setEditingItem] = useState(null);
   const [itemForm, setItemForm] = useState(EMPTY_ITEM_FORM);
+  const unitOptions = useMemo(() => getUnitOptions(itemForm.unit), [itemForm.unit]);
+  const selectedUnit = useMemo(
+    () => unitOptions.find((option) => option.value === itemForm.unit) ?? UNIT_OPTIONS[1],
+    [itemForm.unit, unitOptions],
+  );
 
   const resetItemForm = () => {
     setItemForm(EMPTY_ITEM_FORM);
@@ -301,11 +319,16 @@ export default function AssetLedgerPage() {
                   </div>
                   <div className="col-6">
                     <label className="form-label">واحد</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={itemForm.unit}
-                      onChange={(e) => setItemForm({ ...itemForm, unit: e.target.value })}
+                    <Select
+                      classNamePrefix="unit-select"
+                      inputId="item-unit"
+                      options={unitOptions}
+                      value={selectedUnit}
+                      onChange={(option) =>
+                        setItemForm({ ...itemForm, unit: option?.value ?? 'عدد' })
+                      }
+                      isSearchable={false}
+                      placeholder="انتخاب واحد..."
                     />
                   </div>
                 </div>
