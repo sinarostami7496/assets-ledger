@@ -53,7 +53,7 @@ export default function SettingsPage() {
     ].join('\n');
 
     const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
-    downloadBlob(blob, 'assets-ledger.csv');
+    downloadBlob(blob, getFilename('assets-ledger', 'csv'));
   };
 
   const exportExcel = () => {
@@ -61,7 +61,7 @@ export default function SettingsPage() {
     const ws = XLSX.utils.json_to_sheet(rows);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'دارایی‌ها');
-    XLSX.writeFile(wb, 'assets-ledger.xlsx');
+    XLSX.writeFile(wb, getFilename('assets-ledger', 'xlsx'));
   };
 
   const exportPDF = () => {
@@ -91,7 +91,7 @@ export default function SettingsPage() {
       styles: { fontSize: 9 },
     });
 
-    doc.save('assets-ledger.pdf');
+    doc.save(getFilename('assets-ledger', 'pdf'));
   };
 
   const printReport = () => {
@@ -163,7 +163,7 @@ export default function SettingsPage() {
     const blob = new Blob([JSON.stringify(exportFullState(), null, 2)], {
       type: 'application/json',
     });
-    downloadBlob(blob, 'wealth-dashboard-backup.json');
+    downloadBlob(blob, getFilename('wealth-dashboard-backup', 'json'));
   };
 
   const importJSON = (e) => {
@@ -263,4 +263,31 @@ function downloadBlob(blob, filename) {
   a.download = filename;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+function getCurrentTime() {
+  const now = new Date();
+
+  const parts = new Intl.DateTimeFormat('fa-IR', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false,
+    numberingSystem: 'latn' 
+  }).formatToParts(now);
+
+  const dateObj = parts.reduce((acc, part) => {
+    acc[part.type] = part.value;
+    return acc;
+  }, {});
+
+  const formattedDate = `${dateObj.year}-${dateObj.month}-${dateObj.day}_${dateObj.hour}-${dateObj.minute}-${dateObj.second}`;
+  return formattedDate;
+}
+
+function getFilename(filename, extension) {
+  return `${filename}_${getCurrentTime()}.${extension}`;
 }
