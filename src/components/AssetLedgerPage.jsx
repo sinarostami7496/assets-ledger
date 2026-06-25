@@ -1,4 +1,5 @@
 import { Fragment, useState } from 'react';
+import { NumericFormat } from 'react-number-format';
 import {
   ChevronDown,
   ChevronLeft,
@@ -360,12 +361,16 @@ export default function AssetLedgerPage() {
                 ) : (
                   <div className="mb-3">
                     <label className="form-label">ارزش واحد (تومان)</label>
-                    <input
-                      type="number"
+                    <NumericFormat
                       className="form-control"
                       value={itemForm.unitPrice}
-                      onChange={(e) => setItemForm({ ...itemForm, unitPrice: e.target.value })}
-                      min="0"
+                      onValueChange={({ value }) =>
+                        setItemForm({ ...itemForm, unitPrice: value })
+                      }
+                      thousandSeparator=","
+                      allowNegative={false}
+                      decimalScale={0}
+                      inputMode="numeric"
                     />
                   </div>
                 )}
