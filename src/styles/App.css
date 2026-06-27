@@ -372,6 +372,14 @@ body {
 .page-header h2 {
   font-weight: 800;
   margin-bottom: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.page-header-icon {
+  color: var(--gold);
+  flex-shrink: 0;
 }
 
 .page-header {
@@ -675,4 +683,158 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(148, 163, 184, 0.6);
+}
+
+/* ─── Live Rates Page ─── */
+.live-rates-page {
+  max-width: 1100px;
+  margin-inline: auto;
+}
+
+.rates-last-update {
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--text-muted);
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(240, 180, 41, 0.08);
+  border: 1px solid rgba(240, 180, 41, 0.15);
+  border-radius: 12px;
+}
+
+.rates-table-wrap {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+}
+
+.rates-table thead th {
+  text-align: center;
+}
+
+.rates-table thead th:first-child {
+  text-align: right;
+}
+
+.rates-table tbody td,
+.rates-table tbody th {
+  text-align: center;
+}
+
+.rates-label-cell {
+  font-weight: 600;
+  text-align: right !important;
+  white-space: nowrap;
+  min-width: 9rem;
+}
+
+.rates-value-cell {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rates-bubble {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4rem;
+  padding: 0.2rem 0.55rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.88rem;
+}
+
+.rates-bubble-up {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.12);
+}
+
+.rates-bubble-down {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.12);
+}
+
+.rates-bubble-neutral {
+  color: var(--text-muted);
+  background: rgba(148, 163, 184, 0.1);
+}
+
+[data-bs-theme='light'] .rates-bubble-up {
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+}
+
+[data-bs-theme='light'] .rates-bubble-down {
+  color: #16a34a;
+  background: rgba(22, 163, 74, 0.1);
+}
+
+.rates-mobile-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.rates-mobile-card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 1rem 1.15rem;
+  backdrop-filter: blur(8px);
+}
+
+.rates-mobile-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 0 0 0.85rem;
+  padding-bottom: 0.65rem;
+  border-bottom: 1px solid var(--card-border);
+}
+
+.rates-mobile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem 1rem;
+  margin: 0;
+}
+
+.rates-mobile-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.rates-mobile-item dt {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+.rates-mobile-item dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 767.98px) {
+  .rates-last-update {
+    font-size: 0.85rem;
+    line-height: 1.6;
+  }
+}
+
+@media (min-width: 768px) and (max-width: 991.98px) {
+  .rates-table {
+    font-size: 0.88rem;
+  }
+
+  .rates-label-cell {
+    min-width: 7.5rem;
+  }
+}
+
+.dir-ltr {
+  direction: ltr;
 }

@@ -1,5 +1,5 @@
 export const TGJU_API_URL = 'https://call4.tgju.org/ajax.json';
-export const FETCH_INTERVAL_MS = 60_000;
+export const FETCH_INTERVAL_MS = 60_000 * 60;
 
 const GRAM_PER_OUNCE = 31.1034768;
 
@@ -46,6 +46,8 @@ export function mapTgjuPrices(current) {
     usdRate: rialToToman(usdRial),
     gold18kPerGram,
     gold18kBubble,
+    gold24kPerGram: rialToToman(parseTgjuNumber(current.geram24?.p)),
+    mesghal: rialToToman(parseTgjuNumber(current.mesghal?.p)),
     coinSekee: rialToToman(parseTgjuNumber(current.sekee?.p)),
     coinSekeb: rialToToman(parseTgjuNumber(current.sekeb?.p)),
     coinGerami: rialToToman(parseTgjuNumber(current.gerami?.p)),

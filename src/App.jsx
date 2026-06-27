@@ -3,6 +3,7 @@ import HeaderBanner from './components/HeaderBanner';
 import DashboardPage from './components/DashboardPage';
 import AssetLedgerPage from './components/AssetLedgerPage';
 import SettingsPage from './components/SettingsPage';
+import LiveRatesPage from './components/LiveRatesPage';
 import { AssetProvider, useAssets } from './context/AssetContext';
 import './styles/App.css';
 
@@ -14,6 +15,8 @@ function PageContent() {
       return <AssetLedgerPage />;
     case 'settings':
       return <SettingsPage />;
+    case 'rates':
+      return <LiveRatesPage />;
     default:
       return <DashboardPage />;
   }

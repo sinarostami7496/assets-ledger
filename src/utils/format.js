@@ -32,3 +32,25 @@ export function formatNumber(value, decimals = 0) {
 export function generateId(prefix = 'id') {
   return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
+
+/** تاریخ و ساعت آخرین بروزرسانی به فارسی */
+export function formatLastUpdate(isoString) {
+  if (!isoString) return null;
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return null;
+
+  const time = new Intl.DateTimeFormat('fa-IR', {
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
+  }).format(date);
+
+  const dayName = new Intl.DateTimeFormat('fa-IR', { weekday: 'long' }).format(date);
+  const datePart = new Intl.DateTimeFormat('fa-IR', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  }).format(date);
+
+  return `آخرین بروزرسانی: ${time} ${dayName} ${datePart}`;
+}

@@ -10,6 +10,8 @@ export const DEFAULT_PRICES = {
   usdRate: 161500,
   gold18kPerGram: 16085200,
   gold18kBubble: 0,
+  gold24kPerGram: 21450000,
+  mesghal: 695000000,
   coinSekee: 163010000,
   coinSekeb: 158500000,
   coinGerami: 25500000,

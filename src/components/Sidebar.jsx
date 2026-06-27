@@ -4,11 +4,13 @@ import {
   Settings,
   X,
   Gem,
+  TrendingUp,
 } from 'lucide-react';
 import { useAssets } from '../context/AssetContext';
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'پیشخوان', icon: LayoutDashboard, emoji: '📊' },
+  { id: 'rates', label: 'نرخ لحظه‌ای ارز و طلا', icon: TrendingUp, emoji: '💰' },
   { id: 'ledger', label: 'مدیریت دارایی‌ها', icon: Wallet, emoji: '💼' },
   { id: 'settings', label: 'تنظیمات و پشتیبان‌گیری', icon: Settings, emoji: '⚙️' },
 ];
