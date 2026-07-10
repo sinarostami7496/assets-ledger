@@ -392,7 +392,7 @@ export function AssetProvider({ children }) {
     const usdtTotal =
       (withPercent.find((c) => c.name === 'USDT' || c.name === 'دلار')?.total || 0);
     const liquidTotal =
-      usdtTotal + (withPercent.find((c) => c.name === 'درآمد ثابت')?.total || 0);
+      usdtTotal + (withPercent.filter((c) => c.name === 'درآمد ثابت' || c.name === 'نقد / بانک').reduce((sum, c) => sum + c.total, 0));
 
     const allocation = withPercent
       .filter((c) => c.total > 0)
