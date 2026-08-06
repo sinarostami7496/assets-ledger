@@ -272,10 +272,7 @@ function reducer(state, action) {
 const AssetContext = createContext(null);
 
 const LIVE_PRICE_RESOLVERS = {
-  gold18k: (prices) => {
-    const bubbleMultiplier = 1 + (prices.gold18kBubble || 0) / 100;
-    return Math.round(prices.gold18kPerGram * bubbleMultiplier);
-  },
+  gold18k: (prices) => prices.gold18kPerGram,
   usdt: (prices) => prices.usdtRate,
   usd: (prices) => prices.usdRate,
   sekee: (prices) => prices.coinSekee,
