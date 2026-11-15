@@ -163,45 +163,6 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
-
-        <div className="col-lg-7">
-          <div className="chart-card h-100">
-            <h5 className="chart-title">رشد تاریخی ثروت</h5>
-            <p className="text-muted small mb-3">روند تغییرات ارزش کل سبد (تومان)</p>
-            <ResponsiveContainer width="100%" height={320}>
-              <LineChart data={lineData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fill: 'var(--text-muted)', fontSize: 12 }}
-                  tickFormatter={toPersianDigits}
-                />
-                <YAxis
-                  tick={{ fill: 'var(--text-muted)', fontSize: 11 }}
-                  tickFormatter={(v) =>
-                    showPrices
-                      ? toPersianDigits((v / 1_000_000).toFixed(0)) + 'M'
-                      : mask('')
-                  }
-                />
-                <Tooltip content={<CustomTooltip />} />
-                <Line
-                  type="monotone"
-                  dataKey="total"
-                  name="ارزش کل"
-                  stroke="#f0b429"
-                  strokeWidth={3}
-                  dot={{ fill: '#f0b429', r: 5 }}
-                  activeDot={{ r: 7 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-            <p className="text-muted small text-center mt-2 mb-0">
-              نرخ USDT فعلی: {displayCurrency(prices.usdtRate, '')} — معادل:{' '}
-              {displayNumber(usdtEquivalent, 0)} USDT
-            </p>
-          </div>
-        </div>
       </div>
     </div>
   );
