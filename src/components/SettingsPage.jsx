@@ -1,4 +1,5 @@
-import { useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { NumericFormat } from 'react-number-format';
 import {
   Moon,
   Sun,
@@ -6,16 +7,63 @@ import {
   Upload,
   FileSpreadsheet,
   FileText,
+  Target,
+  Save,
+  Scale,
 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { useAssets } from '../context/AssetContext';
 import { formatCurrency, formatPercent, toPersianDigits } from '../utils/format';
+import { isTargetAllocationValid } from '../utils/targetAllocation';
+
+function buildDraftFromState(assetClasses, targetAllocation) {
+  const draft = {};
+  assetClasses.forEach((c) => {
+    draft[c.id] =
+      targetAllocation[c.id] != null ? String(targetAllocation[c.id]) : '';
+  });
+  return draft;
+}
 
 export default function SettingsPage() {
   const { state, dispatch, portfolioSummary, exportFullState } = useAssets();
   const fileInputRef = useRef(null);
+  const [targetDraft, setTargetDraft] = useState(() =>
+    buildDraftFromState(state.assetClasses, state.targetAllocation)
+  );
+
+  const targetDraftSum = useMemo(() => {
+    return Object.values(targetDraft).reduce((sum, raw) => sum + (Number(raw) || 0), 0);
+  }, [targetDraft]);
+
+  const parsedTargetForValidation = useMemo(() => {
+    const map = {};
+    state.assetClasses.forEach((c) => {
+      const raw = targetDraft[c.id];
+      if (raw !== '' && raw != null) map[c.id] = Number(raw) || 0;
+    });
+    return map;
+  }, [targetDraft, state.assetClasses]);
+
+  const targetFormValid = useMemo(
+    () => isTargetAllocationValid(parsedTargetForValidation, state.assetClasses.map((c) => c.id)),
+    [parsedTargetForValidation, state.assetClasses]
+  );
+
+  const savedTargetValid = useMemo(
+    () =>
+      isTargetAllocationValid(
+        state.targetAllocation,
+        state.assetClasses.map((c) => c.id)
+      ),
+    [state.assetClasses, state.targetAllocation]
+  );
+
+  useEffect(() => {
+    setTargetDraft(buildDraftFromState(state.assetClasses, state.targetAllocation));
+  }, [state.assetClasses, state.targetAllocation]);
 
   const toggleTheme = () => {
     dispatch({
@@ -166,6 +214,41 @@ export default function SettingsPage() {
     downloadBlob(blob, getFilename('wealth-dashboard-backup', 'json'));
   };
 
+  const distributeTargetsEvenly = () => {
+    if (state.assetClasses.length === 0) return;
+    const each = Math.round((100 / state.assetClasses.length) * 10) / 10;
+    const next = {};
+    state.assetClasses.forEach((c, index) => {
+      if (index === state.assetClasses.length - 1) {
+        const assigned = each * (state.assetClasses.length - 1);
+        next[c.id] = String(Math.round((100 - assigned) * 10) / 10);
+      } else {
+        next[c.id] = String(each);
+      }
+    });
+    setTargetDraft(next);
+  };
+
+  const syncDraftFromPortfolio = () => {
+    const next = {};
+    state.assetClasses.forEach((c) => {
+      const row = portfolioSummary.classTotals.find((t) => t.id === c.id);
+      const percent = row?.percent ?? 0;
+      next[c.id] = String(Math.round(percent * 10) / 10);
+    });
+    setTargetDraft(next);
+  };
+
+  const saveTargetAllocation = () => {
+    if (!targetFormValid) return;
+    dispatch({ type: 'SET_TARGET_ALLOCATION', targetAllocation: parsedTargetForValidation });
+  };
+
+  const clearTargetAllocation = () => {
+    dispatch({ type: 'SET_TARGET_ALLOCATION', targetAllocation: {} });
+    setTargetDraft(buildDraftFromState(state.assetClasses, {}));
+  };
+
   const importJSON = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -192,6 +275,125 @@ export default function SettingsPage() {
       </div>
 
       <div className="row g-4">
+        <div className="col-12">
+          <div className="settings-card target-allocation-card">
+            <div className="d-flex flex-wrap align-items-center gap-2 mb-2">
+              <Target size={22} className="text-warning" />
+              <h5 className="mb-0">تخصیص هدف سبد</h5>
+              {savedTargetValid && (
+                <span className="badge text-bg-success">فعال در پیشخوان</span>
+              )}
+            </div>
+            <p className="text-muted small mb-3">
+              برای هر کلاس دارایی درصد هدف تعیین کنید. جمع درصدها باید ۱۰۰٪ باشد تا انحراف در
+              پیشخوان نمایش داده شود.
+            </p>
+            {state.assetClasses.length === 0 ? (
+              <p className="text-muted mb-0">ابتدا در صفحهٔ مدیریت دارایی‌ها کلاس اضافه کنید.</p>
+            ) : (
+              <>
+                <div className="table-responsive mb-3">
+                  <table className="table table-sm target-allocation-table mb-0">
+                    <thead>
+                      <tr>
+                        <th>کلاس</th>
+                        <th>درصد فعلی سبد</th>
+                        <th>درصد هدف</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {state.assetClasses.map((assetClass) => {
+                        const current = portfolioSummary.classTotals.find(
+                          (t) => t.id === assetClass.id
+                        );
+                        return (
+                          <tr key={assetClass.id}>
+                            <td>{assetClass.name}</td>
+                            <td>{formatPercent(current?.percent ?? 0)}</td>
+                            <td>
+                              <NumericFormat
+                                className="form-control form-control-sm target-percent-input"
+                                value={targetDraft[assetClass.id] ?? ''}
+                                onValueChange={({ value }) =>
+                                  setTargetDraft((prev) => ({
+                                    ...prev,
+                                    [assetClass.id]: value,
+                                  }))
+                                }
+                                decimalScale={1}
+                                allowNegative={false}
+                                isAllowed={({ floatValue }) =>
+                                  floatValue == null || floatValue <= 100
+                                }
+                                suffix=" ٪"
+                                inputMode="decimal"
+                              />
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                    <tfoot>
+                      <tr>
+                        <td colSpan={2} className="fw-semibold">
+                          جمع درصدها
+                        </td>
+                        <td
+                          className={`fw-bold ${
+                            Math.abs(targetDraftSum - 100) < 0.05 ? 'text-success' : 'text-danger'
+                          }`}
+                        >
+                          {formatPercent(targetDraftSum, 1)}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+                <div className="d-flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={distributeTargetsEvenly}
+                  >
+                    <Scale size={16} className="me-1" />
+                    تقسیم برابر بین کلاس‌ها
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary btn-sm"
+                    onClick={syncDraftFromPortfolio}
+                  >
+                    کپی از وضعیت فعلی سبد
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={saveTargetAllocation}
+                    disabled={!targetFormValid}
+                  >
+                    <Save size={16} className="me-1" />
+                    ذخیره اهداف
+                  </button>
+                  {Object.keys(state.targetAllocation).length > 0 && (
+                    <button
+                      type="button"
+                      className="btn btn-outline-danger btn-sm"
+                      onClick={clearTargetAllocation}
+                    >
+                      حذف اهداف
+                    </button>
+                  )}
+                </div>
+                {!targetFormValid && targetDraftSum > 0 && (
+                  <p className="text-danger small mb-0 mt-2">
+                    همهٔ کلاس‌ها باید درصد هدف داشته باشند و جمع دقیقاً ۱۰۰٪ باشد.
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+
         <div className="col-lg-6">
           <div className="settings-card">
             <h5>ظاهر برنامه</h5>

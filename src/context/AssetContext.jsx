@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useCallback } from 'react';
 import { generateId } from '../utils/format';
 import { fetchLivePrices, FETCH_INTERVAL_MS } from '../services/tgjuApi';
+import { buildTargetDriftRows } from '../utils/targetAllocation';
 
 const STORAGE_KEY = 'wealth-dashboard-v1';
 
@@ -117,6 +118,7 @@ const defaultState = {
   expandedClasses: {},
   sidebarOpen: false,
   showPrices: true,
+  targetAllocation: {},
 };
 
 function migratePrices(prices) {
@@ -264,6 +266,8 @@ function reducer(state, action) {
       };
     case 'UPDATE_WEALTH_HISTORY':
       return { ...state, wealthHistory: action.history };
+    case 'SET_TARGET_ALLOCATION':
+      return { ...state, targetAllocation: action.targetAllocation };
     default:
       return state;
   }
@@ -402,6 +406,13 @@ export function AssetProvider({ children }) {
     const usdtEquivalent =
       prices.usdtRate > 0 ? portfolioTotal / prices.usdtRate : 0;
 
+    const targetDrift = buildTargetDriftRows(
+      state.assetClasses,
+      state.targetAllocation,
+      withPercent,
+      portfolioTotal
+    );
+
     return {
       classTotals: withPercent,
       portfolioTotal,
@@ -410,8 +421,9 @@ export function AssetProvider({ children }) {
       allocation,
       concentration,
       usdtEquivalent,
+      targetDrift,
     };
-  }, [state.assetClasses, prices, getItemTotal]);
+  }, [state.assetClasses, state.targetAllocation, prices, getItemTotal]);
 
   useEffect(() => {
     const total = portfolioSummary.portfolioTotal;
