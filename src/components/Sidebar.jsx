@@ -16,7 +16,7 @@ const NAV_ITEMS = [
 ];
 
 export default function Sidebar() {
-  const { state, dispatch } = useAssets();
+  const { state, dispatch, activeRateAlerts } = useAssets();
 
   return (
     <>
@@ -58,6 +58,11 @@ export default function Sidebar() {
               <span className="nav-emoji">{emoji}</span>
               <Icon size={18} className="nav-icon" />
               <span>{label}</span>
+              {id === 'rates' && activeRateAlerts.length > 0 && (
+                <span className="nav-alert-badge" aria-label={`${activeRateAlerts.length} هشدار فعال`}>
+                  {activeRateAlerts.length}
+                </span>
+              )}
             </button>
           ))}
         </nav>

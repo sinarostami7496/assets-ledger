@@ -2,6 +2,11 @@ import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useC
 import { generateId } from '../utils/format';
 import { fetchLivePrices, FETCH_INTERVAL_MS } from '../services/tgjuApi';
 import { buildTargetDriftRows } from '../utils/targetAllocation';
+import {
+  createDefaultRateAlertSettings,
+  evaluateRateAlerts,
+  migrateRateAlertSettings,
+} from '../utils/rateAlerts';
 
 const STORAGE_KEY = 'wealth-dashboard-v1';
 
@@ -119,6 +124,7 @@ const defaultState = {
   sidebarOpen: false,
   showPrices: true,
   targetAllocation: {},
+  rateAlertSettings: createDefaultRateAlertSettings(),
 };
 
 function migratePrices(prices) {
@@ -155,6 +161,7 @@ function loadState() {
       ...parsed,
       prices: migratePrices(parsed.prices),
       assetClasses: migrateAssetClasses(parsed.assetClasses),
+      rateAlertSettings: migrateRateAlertSettings(parsed.rateAlertSettings),
       priceFetchStatus: 'cached',
       priceFlash: {},
     };
@@ -261,6 +268,9 @@ function reducer(state, action) {
       return {
         ...defaultState,
         ...action.payload,
+        prices: migratePrices(action.payload?.prices),
+        assetClasses: migrateAssetClasses(action.payload?.assetClasses),
+        rateAlertSettings: migrateRateAlertSettings(action.payload?.rateAlertSettings),
         priceFetchStatus: 'cached',
         priceFlash: {},
       };
@@ -268,6 +278,11 @@ function reducer(state, action) {
       return { ...state, wealthHistory: action.history };
     case 'SET_TARGET_ALLOCATION':
       return { ...state, targetAllocation: action.targetAllocation };
+    case 'SET_RATE_ALERT_SETTINGS':
+      return {
+        ...state,
+        rateAlertSettings: migrateRateAlertSettings(action.rateAlertSettings),
+      };
     default:
       return state;
   }
@@ -442,12 +457,18 @@ export function AssetProvider({ children }) {
     }
   }, [portfolioSummary.portfolioTotal]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const activeRateAlerts = useMemo(
+    () => evaluateRateAlerts(prices, state.rateAlertSettings),
+    [prices, state.rateAlertSettings]
+  );
+
   const value = useMemo(
     () => ({
       state,
       dispatch,
       prices,
       portfolioSummary,
+      activeRateAlerts,
       getItemTotal,
       resolveUnitPrice: (item) => resolveUnitPrice(item, prices),
       exportFullState: () => {
@@ -455,7 +476,7 @@ export function AssetProvider({ children }) {
         return rest;
       },
     }),
-    [state, prices, portfolioSummary, getItemTotal]
+    [state, prices, portfolioSummary, activeRateAlerts, getItemTotal]
   );
 
   return <AssetContext.Provider value={value}>{children}</AssetContext.Provider>;

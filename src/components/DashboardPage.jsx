@@ -17,6 +17,7 @@ import {
 import { useAssets } from '../context/AssetContext';
 import { useSensitiveDisplay } from '../hooks/useSensitiveDisplay';
 import { toPersianDigits } from '../utils/format';
+import RateAlertsPanel from './RateAlertsPanel';
 
 const CHART_COLORS = ['#f0b429', '#4ade80', '#60a5fa', '#c084fc', '#fb7185', '#2dd4bf', '#f97316'];
 
@@ -28,7 +29,7 @@ const KPI_CONFIG = [
 ];
 
 export default function DashboardPage() {
-  const { portfolioSummary, dispatch } = useAssets();
+  const { portfolioSummary, dispatch, activeRateAlerts } = useAssets();
   const { displayCurrency, displayNumber, displayPercent } = useSensitiveDisplay();
   const {
     portfolioTotal,
@@ -93,6 +94,8 @@ export default function DashboardPage() {
           </div>
         ))}
       </div>
+
+      <RateAlertsPanel alerts={activeRateAlerts} />
 
       {targetDrift.isActive && targetDrift.alerts.length > 0 && (
         <div className="alert alert-info target-drift-alert mb-4">

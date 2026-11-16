@@ -17,6 +17,7 @@ import autoTable from 'jspdf-autotable';
 import { useAssets } from '../context/AssetContext';
 import { formatCurrency, formatPercent, toPersianDigits } from '../utils/format';
 import { isTargetAllocationValid } from '../utils/targetAllocation';
+import RateAlertSettings from './RateAlertSettings';
 
 function buildDraftFromState(assetClasses, targetAllocation) {
   const draft = {};
@@ -275,6 +276,10 @@ export default function SettingsPage() {
       </div>
 
       <div className="row g-4">
+        <div className="col-12">
+          <RateAlertSettings />
+        </div>
+
         <div className="col-12">
           <div className="settings-card target-allocation-card">
             <div className="d-flex flex-wrap align-items-center gap-2 mb-2">

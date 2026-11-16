@@ -3,6 +3,7 @@ import { TrendingUp } from 'lucide-react';
 import { useAssets } from '../context/AssetContext';
 import { formatCurrency, formatLastUpdate, formatPercent } from '../utils/format';
 import { RATE_ROWS, buildRateRowMetrics } from '../utils/goldCalculations';
+import RateAlertsPanel from './RateAlertsPanel';
 
 function BubbleCell({ value }) {
   if (value === 0) {
@@ -18,11 +19,11 @@ function BubbleCell({ value }) {
   );
 }
 
-function RatesTableRow({ row, prices}) {
+function RatesTableRow({ row, prices, highlighted }) {
   const metrics = useMemo(() => buildRateRowMetrics(prices, row), [prices, row]);
 
   return (
-    <tr>
+    <tr className={highlighted ? 'rates-row-alert' : undefined}>
       <th scope="row" className="rates-label-cell">
         {row.label}
       </th>
@@ -36,11 +37,11 @@ function RatesTableRow({ row, prices}) {
   );
 }
 
-function RatesMobileCard({ row, prices}) {
+function RatesMobileCard({ row, prices, highlighted }) {
   const metrics = useMemo(() => buildRateRowMetrics(prices, row), [prices, row]);
 
   return (
-    <article className="rates-mobile-card">
+    <article className={`rates-mobile-card${highlighted ? ' rates-row-alert' : ''}`}>
       <h3 className="rates-mobile-title">{row.label}</h3>
       <dl className="rates-mobile-grid">
         <div className="rates-mobile-item">
@@ -67,9 +68,17 @@ function RatesMobileCard({ row, prices}) {
 }
 
 export default function LiveRatesPage() {
-  const { prices, state } = useAssets();
+  const { prices, state, activeRateAlerts } = useAssets();
 
   const lastUpdate = formatLastUpdate(state.lastSuccessfulFetch);
+
+  const highlightedRowIds = useMemo(() => {
+    const ids = new Set();
+    activeRateAlerts.forEach((alert) => {
+      if (alert.rowId) ids.add(alert.rowId);
+    });
+    return ids;
+  }, [activeRateAlerts]);
 
   return (
     <div className="page live-rates-page">
@@ -86,6 +95,8 @@ export default function LiveRatesPage() {
           {lastUpdate}
         </p>
       )}
+
+      <RateAlertsPanel alerts={activeRateAlerts} compact />
 
       <div className="rates-table-wrap d-none d-md-block">
         <div className="table-responsive">
@@ -105,6 +116,7 @@ export default function LiveRatesPage() {
                   key={row.id}
                   row={row}
                   prices={prices}
+                  highlighted={highlightedRowIds.has(row.id)}
                 />
               ))}
             </tbody>
@@ -118,6 +130,7 @@ export default function LiveRatesPage() {
             key={row.id}
             row={row}
             prices={prices}
+            highlighted={highlightedRowIds.has(row.id)}
           />
         ))}
       </div>
