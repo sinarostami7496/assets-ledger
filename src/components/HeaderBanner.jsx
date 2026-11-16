@@ -7,6 +7,7 @@ import {
   Loader2,
   Eye,
   EyeOff,
+  Lock,
 } from 'lucide-react';
 import { useAssets } from '../context/AssetContext';
 import { useSensitiveDisplay } from '../hooks/useSensitiveDisplay';
@@ -38,7 +39,7 @@ const STATUS_CONFIG = {
 };
 
 export default function HeaderBanner() {
-  const { state, dispatch, prices } = useAssets();
+  const { state, dispatch, prices, pinActive, lockApp } = useAssets();
   const { showPrices } = useSensitiveDisplay();
   const flash = state.priceFlash || {};
   const status = STATUS_CONFIG[state.priceFetchStatus] || STATUS_CONFIG.cached;
@@ -69,9 +70,21 @@ export default function HeaderBanner() {
           <span className="banner-divider" />
           <span>نرخ‌های لحظه‌ای بازار</span>
         </div>
+        {pinActive && (
+          <button
+            type="button"
+            className="btn btn-sm btn-outline-light balance-toggle-btn ms-auto"
+            onClick={lockApp}
+            aria-label="قفل برنامه با پین"
+            title="قفل برنامه"
+          >
+            <Lock size={18} />
+            <span className="balance-toggle-label d-none d-md-inline">قفل</span>
+          </button>
+        )}
         <button
           type="button"
-          className="btn btn-sm btn-outline-light balance-toggle-btn ms-auto"
+          className={`btn btn-sm btn-outline-light balance-toggle-btn${pinActive ? '' : ' ms-auto'}`}
           onClick={() => dispatch({ type: 'TOGGLE_SHOW_PRICES' })}
           aria-label={showPrices ? 'مخفی کردن موجودی' : 'نمایش موجودی'}
           title={showPrices ? 'مخفی کردن موجودی' : 'نمایش موجودی'}

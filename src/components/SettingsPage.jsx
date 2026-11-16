@@ -18,6 +18,7 @@ import { useAssets } from '../context/AssetContext';
 import { formatCurrency, formatPercent, toPersianDigits } from '../utils/format';
 import { isTargetAllocationValid } from '../utils/targetAllocation';
 import RateAlertSettings from './RateAlertSettings';
+import PinSettings from './PinSettings';
 
 function buildDraftFromState(assetClasses, targetAllocation) {
   const draft = {};
@@ -397,6 +398,10 @@ export default function SettingsPage() {
               </>
             )}
           </div>
+        </div>
+
+        <div className="col-lg-6">
+          <PinSettings />
         </div>
 
         <div className="col-lg-6">

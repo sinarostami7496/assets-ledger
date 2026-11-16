@@ -1,4 +1,13 @@
-import { createContext, useContext, useEffect, useMemo, useReducer, useRef, useCallback } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useCallback,
+  useState,
+} from 'react';
 import { generateId } from '../utils/format';
 import { fetchLivePrices, FETCH_INTERVAL_MS } from '../services/tgjuApi';
 import { buildTargetDriftRows } from '../utils/targetAllocation';
@@ -7,6 +16,7 @@ import {
   evaluateRateAlerts,
   migrateRateAlertSettings,
 } from '../utils/rateAlerts';
+import { EMPTY_PIN_LOCK, hashPin, migratePinLock, verifyPin } from '../utils/pin';
 
 const STORAGE_KEY = 'wealth-dashboard-v1';
 
@@ -125,6 +135,7 @@ const defaultState = {
   showPrices: true,
   targetAllocation: {},
   rateAlertSettings: createDefaultRateAlertSettings(),
+  pinLock: { ...EMPTY_PIN_LOCK },
 };
 
 function migratePrices(prices) {
@@ -162,6 +173,7 @@ function loadState() {
       prices: migratePrices(parsed.prices),
       assetClasses: migrateAssetClasses(parsed.assetClasses),
       rateAlertSettings: migrateRateAlertSettings(parsed.rateAlertSettings),
+      pinLock: migratePinLock(parsed.pinLock),
       priceFetchStatus: 'cached',
       priceFlash: {},
     };
@@ -271,6 +283,7 @@ function reducer(state, action) {
         prices: migratePrices(action.payload?.prices),
         assetClasses: migrateAssetClasses(action.payload?.assetClasses),
         rateAlertSettings: migrateRateAlertSettings(action.payload?.rateAlertSettings),
+        pinLock: migratePinLock(action.payload?.pinLock),
         priceFetchStatus: 'cached',
         priceFlash: {},
       };
@@ -283,6 +296,13 @@ function reducer(state, action) {
         ...state,
         rateAlertSettings: migrateRateAlertSettings(action.rateAlertSettings),
       };
+    case 'SET_PIN_LOCK':
+      return {
+        ...state,
+        pinLock: migratePinLock(action.pinLock),
+      };
+    case 'CLEAR_PIN_LOCK':
+      return { ...state, pinLock: { ...EMPTY_PIN_LOCK } };
     default:
       return state;
   }
@@ -315,8 +335,29 @@ export function resolveUnitPrice(item, prices) {
 
 export function AssetProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, undefined, loadState);
+  const pinActive = Boolean(state.pinLock?.enabled && state.pinLock?.hash && state.pinLock?.salt);
+  const [pinUnlocked, setPinUnlocked] = useState(() => !pinActive);
   const stateRef = useRef(state);
   stateRef.current = state;
+
+  useEffect(() => {
+    if (!pinActive) {
+      setPinUnlocked(true);
+    }
+  }, [pinActive]);
+
+  useEffect(() => {
+    if (!pinActive) return undefined;
+
+    const lockOnHide = () => {
+      if (document.hidden) {
+        setPinUnlocked(false);
+      }
+    };
+
+    document.addEventListener('visibilitychange', lockOnHide);
+    return () => document.removeEventListener('visibilitychange', lockOnHide);
+  }, [pinActive]);
 
   useEffect(() => {
     persistState(state);
@@ -462,6 +503,38 @@ export function AssetProvider({ children }) {
     [prices, state.rateAlertSettings]
   );
 
+  const lockApp = useCallback(() => {
+    if (pinActive) {
+      setPinUnlocked(false);
+    }
+  }, [pinActive]);
+
+  const unlockWithPin = useCallback(
+    async (pin) => {
+      if (!pinActive) return true;
+      const ok = await verifyPin(pin, state.pinLock.salt, state.pinLock.hash);
+      if (ok) {
+        setPinUnlocked(true);
+      }
+      return ok;
+    },
+    [pinActive, state.pinLock]
+  );
+
+  const setupPinLock = useCallback(async (pin) => {
+    const { hash, salt } = await hashPin(pin);
+    dispatch({
+      type: 'SET_PIN_LOCK',
+      pinLock: { enabled: true, hash, salt },
+    });
+    setPinUnlocked(true);
+  }, []);
+
+  const removePinLock = useCallback(() => {
+    dispatch({ type: 'CLEAR_PIN_LOCK' });
+    setPinUnlocked(true);
+  }, []);
+
   const value = useMemo(
     () => ({
       state,
@@ -469,6 +542,12 @@ export function AssetProvider({ children }) {
       prices,
       portfolioSummary,
       activeRateAlerts,
+      pinActive,
+      pinUnlocked,
+      lockApp,
+      unlockWithPin,
+      setupPinLock,
+      removePinLock,
       getItemTotal,
       resolveUnitPrice: (item) => resolveUnitPrice(item, prices),
       exportFullState: () => {
@@ -476,7 +555,19 @@ export function AssetProvider({ children }) {
         return rest;
       },
     }),
-    [state, prices, portfolioSummary, activeRateAlerts, getItemTotal]
+    [
+      state,
+      prices,
+      portfolioSummary,
+      activeRateAlerts,
+      pinActive,
+      pinUnlocked,
+      lockApp,
+      unlockWithPin,
+      setupPinLock,
+      removePinLock,
+      getItemTotal,
+    ]
   );
 
   return <AssetContext.Provider value={value}>{children}</AssetContext.Provider>;

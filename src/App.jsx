@@ -4,6 +4,7 @@ import DashboardPage from './components/DashboardPage';
 import AssetLedgerPage from './components/AssetLedgerPage';
 import SettingsPage from './components/SettingsPage';
 import LiveRatesPage from './components/LiveRatesPage';
+import PinLockOverlay from './components/PinLockOverlay';
 import { AssetProvider, useAssets } from './context/AssetContext';
 import './styles/App.css';
 
@@ -22,10 +23,14 @@ function PageContent() {
   }
 }
 
-export default function App() {
+function AppShell() {
+  const { pinActive, pinUnlocked } = useAssets();
+  const locked = pinActive && !pinUnlocked;
+
   return (
-    <AssetProvider>
-      <div className="app-shell">
+    <>
+      {locked && <PinLockOverlay />}
+      <div className={`app-shell${locked ? ' app-shell-blurred' : ''}`} inert={locked || undefined}>
         <Sidebar />
         <div className="main-area">
           <HeaderBanner />
@@ -34,6 +39,14 @@ export default function App() {
           </main>
         </div>
       </div>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <AssetProvider>
+      <AppShell />
     </AssetProvider>
   );
 }
